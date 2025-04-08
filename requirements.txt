@@ -1,3 +1,6 @@
-datasets
 pandas
-huggingface_hub
+datasets
+python-dotenv
+transformers
+huggingface-hub
+jinja2
