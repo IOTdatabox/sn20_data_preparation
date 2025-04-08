@@ -32,8 +32,6 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 logger.info(f"Ensuring data directories exist: {TOOL_SHUFFLE_SMALL_DIR}, {CSV_OUTPUT_DIR}")
 
-os.environ['HF_TOKEN'] = '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'
-
 load_dotenv()
 HF_TOKEN = os.getenv('HF_TOKEN')
 
