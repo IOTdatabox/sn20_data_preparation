@@ -5,31 +5,22 @@ import random
 import pandas as pd
 from datasets import load_dataset, load_from_disk
 
+EVALUATION_OUTPUT_DIR = "data/evaluation"
+TOOL_SHUFFLE_SMALL_DIR = "data/tool_shuffle_small"
+ORIGIN_FILE_PATH = os.path.join(TOOL_SHUFFLE_SMALL_DIR, "origin.csv")
+EVALUATION_FILE_PATH = os.path.join(EVALUATION_OUTPUT_DIR, "evaluation.csv")
+
+os.makedirs(EVALUATION_OUTPUT_DIR, exist_ok=True)
 logging.basicConfig(
     level=logging.DEBUG,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
-
-
-def huggingface_loader(dataset_name, root_data_dir="data-preprocessing/bitagent.data", split="train", name=None):
-    logger.debug(f"Loading {dataset_name}")
-    dataset_dir = f"{root_data_dir}/{dataset_name.replace('/', '_')}"
-    if os.path.exists(f"{dataset_dir}/state.json"):
-        logger.debug(f"Loading from disk ({dataset_dir}) ...")
-        ds = load_from_disk(dataset_dir)
-    else:
-        logger.debug("Loading from web ...")
-        ds = load_dataset(dataset_name, split=split, name=name, token=os.getenv("HF_TOKEN", None))
-        ds.save_to_disk(dataset_dir)
-    logger.debug("Loaded.")
-    return ds
+logger.info(f"Ensuring data directories exist: {TOOL_SHUFFLE_SMALL_DIR}, {EVALUATION_OUTPUT_DIR}")
 
 def add_extra_tool_calls():
    # ADD EXTRAB TOOLS IN TOOLS COLUMNS
-    csv_path = "data-preprocessing/bitagent.data/samples/bitagent_shuffle_sample.csv"
-    modified_csv_path = "data-preprocessing/bitagent.data/samples/bitagent_shuffle_processed.csv"
-    modified_df = pd.read_csv(csv_path)
+    modified_df = pd.read_csv(ORIGIN_FILE_PATH)
 
     # Collect all tools from all rows
     all_tools = []
@@ -60,18 +51,11 @@ def add_extra_tool_calls():
                 return tools_str
   
     modified_df['tools'] = modified_df['tools'].apply(update_tools)
-    modified_df.to_csv(modified_csv_path, index=False)
-    print(f"Successfully added tool name to bitagent_shuffle_processed.csv and these are errored rows", errored_rows)
-
-
+    modified_df.to_csv(EVALUATION_FILE_PATH, index=False)
+    print(f"Successfully added tool name to evaluation.csv and these are errored rows", errored_rows)
 
 def create_bitagent_shuffle_dataset():
     try:
-        bitagent_ds = huggingface_loader("BitAgent/tool_shuffle_small")
-        bitagent_df = pd.DataFrame(bitagent_ds)
-        bitagent_sample = bitagent_df.sample(frac=1)
-        bitagent_sample.to_csv(f"data-preprocessing/bitagent.data/samples/bitagent_shuffle_sample.csv", index=False)
-        logger.info(f"Saved BitAgent sample to data-preprocessing/bitagent.data/samples/bitagent_shuffle_sample.csv")
         add_extra_tool_calls()
     except Exception as e:
         logger.error(f"Error processing BitAgent dataset: {str(e)}")

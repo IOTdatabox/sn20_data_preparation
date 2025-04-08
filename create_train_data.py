@@ -1,9 +1,10 @@
 import os
 import logging
 import pandas as pd
+from huggingface_hub import login
+from transformers import AutoTokenizer
 from datasets import load_dataset
 from dotenv import load_dotenv
-import ast
 import json
 import random
 
@@ -13,7 +14,7 @@ DATASET_LENGTH = 3600
 
 # Directory structure constants
 TOOL_SHUFFLE_SMALL_DIR = "data/tool_shuffle_small"
-CSV_OUTPUT_DIR = "data/csv"
+TRAIN_OUTPUT_DIR = "data/train"
 
 # File path constants
 MODIFIED_FILE_PATH = os.path.join(TOOL_SHUFFLE_SMALL_DIR, "modified.csv")
@@ -22,7 +23,7 @@ COMPLETED_FILE_PATH = os.path.join(TOOL_SHUFFLE_SMALL_DIR, "completed.csv")
 
 # Create necessary directories
 os.makedirs(TOOL_SHUFFLE_SMALL_DIR, exist_ok=True)
-os.makedirs(CSV_OUTPUT_DIR, exist_ok=True)
+os.makedirs(TRAIN_OUTPUT_DIR, exist_ok=True)
 
 # Logging setup
 logging.basicConfig(
@@ -30,7 +31,7 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
-logger.info(f"Ensuring data directories exist: {TOOL_SHUFFLE_SMALL_DIR}, {CSV_OUTPUT_DIR}")
+logger.info(f"Ensuring data directories exist: {TOOL_SHUFFLE_SMALL_DIR}, {TRAIN_OUTPUT_DIR}")
 
 load_dotenv()
 HF_TOKEN = os.getenv('HF_TOKEN')
@@ -199,12 +200,9 @@ Here is a list of functions in JSON format that you can invoke:"""
 
 # Process dataset in batches
 formatted_ds = dataset.map(tokenize_function, batched=True, batch_size=2, remove_columns=dataset.column_names)
-# Create output directory if it doesn't exist
-os.makedirs(CSV_OUTPUT_DIR, exist_ok=True)
-
 # Save the entire dataset as train.csv
 train_df = pd.DataFrame(formatted_ds)
-train_df.to_csv(os.path.join(CSV_OUTPUT_DIR, "train.csv"), index=False)
+train_df.to_csv(os.path.join(TRAIN_OUTPUT_DIR, "train.csv"), index=False)
 
-print(f"Dataset saved successfully to {CSV_OUTPUT_DIR}/train.csv!")
+print(f"Dataset saved successfully to {TRAIN_OUTPUT_DIR}/train.csv!")
 
